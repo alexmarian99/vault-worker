@@ -1,0 +1,44 @@
+// Copy to wrangler.jsonc and fill in the <...> values and example.com names (see README).
+// wrangler.jsonc is git-ignored: it holds your own database id, domain and addresses.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vault-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  // The Bitwarden web vault is static; the API paths go to the Worker first.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/identity/*", "/notifications/*", "/icons/*", "/attachments/*", "/alive"]
+  },
+  // `wrangler dev` keeps its own copy in .wrangler/state; deploys use the real database.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "vault", "database_id": "<YOUR_D1_DATABASE_ID>", "migrations_dir": "migrations" }
+  ],
+  // Attachments and Send files.
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "vault-files" }],
+  // Daily cleanup: old trash, expired Sends, abandoned uploads, orphaned R2 files.
+  "triggers": { "crons": ["17 3 * * *"] },
+  // Production (the default, so a plain `wrangler deploy` can't ship dev settings):
+  // no new accounts, and WebAuthn keys bound to the vault's domain.
+  "vars": { "SIGNUPS_ALLOWED": "false", "WEBAUTHN_ORIGIN": "https://vault.example.com", "MAIL_FROM": "vault@example.com" },
+  // Email Routing delivers only to verified destination addresses; this pins it to the owner's.
+  "send_email": [{ "name": "MAIL", "allowed_destination_addresses": ["you@example.com"] }],
+  "routes": [{ "pattern": "vault.example.com", "custom_domain": true }],
+  "workers_dev": false,
+
+  // Local only (`npm run dev` uses --env dev): sign-ups open for tests, WebAuthn and links
+  // from the request's own origin. No route, so wrangler dev doesn't pose as the real domain.
+  "env": {
+    "dev": {
+      "vars": { "SIGNUPS_ALLOWED": "true", "WEBAUTHN_ORIGIN": "auto", "MAIL_FROM": "vault@example.com" },
+      // Simulated locally: wrangler dev writes each message to a file instead of sending it.
+      "send_email": [{ "name": "MAIL" }],
+      "routes": [],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "vault", "database_id": "<YOUR_D1_DATABASE_ID>", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "vault-files" }]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "vault-worker",
+  "version": "0.1.0",
+  "description": "Bitwarden-compatible password manager server for Cloudflare Workers, D1 and R2",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "wrangler d1 migrations apply DB --local",
+    "dev": "wrangler dev --env dev --ip 127.0.0.1 --port 8787 --local-protocol https",
+    "test": "node test/e2e.mjs https://127.0.0.1:8787",
+    "check": "tsc -p .",
+    "dev:cron": "wrangler dev --env dev --ip 127.0.0.1 --port 8787 --local-protocol https --test-scheduled --var CLEANUP_GRACE_SECONDS:0",
+    "test:cleanup": "node test/cleanup.mjs https://127.0.0.1:8787",
+    "test:import": "node test/import.mjs https://127.0.0.1:8787",
+    "test:webauthn": "node test/webauthn.mjs https://127.0.0.1:8787",
+    "test:pbkdf2": "node test/pbkdf2.mjs",
+    "deploy": "wrangler deploy",
+    "patch:webvault": "python -I tools/patch_webvault.py",
+    "test:email": "node test/email.mjs https://127.0.0.1:8787",
+    "setup:webvault": "python -I tools/fetch_webvault.py",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "devDependencies": {
+    "@bitwarden/cli": "^2026.10.0",
+    "@cloudflare/workers-types": "^5.20261025.1",
+    "sass": "^1.106.1",
+    "typescript": "^5.9.3",
+    "wrangler": "4.152.0"
+  }
+}

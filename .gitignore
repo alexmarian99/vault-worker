@@ -1,0 +1,8 @@
+/node_modules
+/.wrangler
+/.dev.vars
+/test/.state.json
+/import.sql
+/wrangler.jsonc
+/public/
+*.log
